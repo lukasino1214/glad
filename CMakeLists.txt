@@ -1,25 +1,34 @@
 cmake_minimum_required(VERSION 3.9)
-
 project(glad)
 
-install( FILES
-        src/glad.c
-        include/glad/glad.h
-        include/KHR/khrplatform.h
-)
+set(DEFAULT_BUILD_TYPE "Release")
 
-# Find source files
-file(GLOB SOURCES src/*.cpp)
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to '${DEFAULT_BUILD_TYPE}' as none was specified.")
+  set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}" CACHE STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
 
-# Include header files
-include_directories(include/glad include/KHR)
+include(GNUInstallDirs)
 
-# Create shared library
-add_library(${PROJECT_NAME} SHARED ${SOURCES})
+set(SOURCE_FILES src/glad.c)
 
-# Install library
-install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
+add_library(${PROJECT_NAME} ...)
 
-# Install library headers
-file(GLOB HEADERS include/*.h)
-install(FILES ${HEADERS} DESTINATION include/${PROJECT_NAME})
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    PRIVATE src)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION 1)
+
+install(TARGETS ${PROJECT_NAME} EXPORT gladConfig
+    ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME  DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+
+install(EXPORT gladConfig DESTINATION share/glad/cmake)
